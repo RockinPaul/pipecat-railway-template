@@ -16,6 +16,8 @@ import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
 
+from providers import public_provider_config, required_secret, validate_provider_environment
+
 ROOT = Path(__file__).parent
 logger = logging.getLogger("pipecat_starter")
 START_TIMEOUT = 60
@@ -32,13 +34,6 @@ class VoiceSession:
     cleaning_up: bool = False
 
 
-def required_secret(name: str) -> str:
-    value = os.getenv(name, "")
-    if not value or any(char.isspace() for char in value):
-        raise RuntimeError(f"{name} must be set and contain no whitespace")
-    return value
-
-
 async def stop_session(session: VoiceSession) -> None:
     if session.task and not session.task.done():
         if not session.task.cancelling() and not session.cleaning_up:
@@ -52,7 +47,7 @@ async def lifespan(app: FastAPI):
     password = required_secret("ACCESS_PASSWORD")
     if len(password) < 24:
         raise RuntimeError("ACCESS_PASSWORD must contain at least 24 characters")
-    required_secret("OPENAI_API_KEY")
+    provider = validate_provider_environment()
     daily_key = required_secret("DAILY_API_KEY")
     duration = int(os.getenv("MAX_SESSION_SECONDS", "600"))
     if not 30 <= duration <= 1800:
@@ -60,6 +55,7 @@ async def lifespan(app: FastAPI):
     if not (ROOT / "static" / "app.js").is_file():
         raise RuntimeError("Browser bundle missing; run npm ci and npm run build")
     app.state.password = password.encode()
+    app.state.provider_config = public_provider_config(provider)
     app.state.duration = duration
     app.state.session = None
     app.state.last_start = float("-inf")
@@ -211,6 +207,11 @@ async def health():
     if app.state.shutting_down:
         raise HTTPException(503, "Shutting down")
     return {"status": "ready"}
+
+
+@app.get("/api/config")
+async def provider_config():
+    return app.state.provider_config
 
 
 @app.post("/api/auth", dependencies=[Depends(authenticate)], status_code=204)

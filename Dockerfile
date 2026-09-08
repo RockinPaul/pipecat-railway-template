@@ -12,7 +12,7 @@ ENV PYTHONUNBUFFERED=1 UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
-COPY server.py bot.py ./
+COPY server.py bot.py providers.py speech.py ./
 COPY LICENSE THIRD_PARTY_NOTICES.md ./
 COPY static/ ./static/
 COPY --from=client /build/static/app.js ./static/app.js

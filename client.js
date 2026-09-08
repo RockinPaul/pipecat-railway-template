@@ -16,6 +16,15 @@ let busy = false;
 let stopping = false;
 let connected = false;
 
+fetch("/api/config")
+  .then((response) => response.ok ? response.json() : Promise.reject())
+  .then((config) => {
+    document.querySelector("#provider-name").textContent = `${config.providerName} voice assistant`;
+    const routed = config.dataProcessors.includes("OpenRouter") ? " OpenRouter also routes data to its selected model providers." : "";
+    document.querySelector("#data-processors").textContent = `Conversation data is processed by ${config.dataProcessors.join(", ")}.${routed}`;
+  })
+  .catch(() => {}); // The generic privacy text remains accurate if this request fails.
+
 function setStatus(text, state = "idle") {
   document.querySelector("#status").textContent = text;
   document.querySelector("#voice-window").dataset.state = state;

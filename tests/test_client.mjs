@@ -6,7 +6,7 @@ import { runInNewContext } from "node:vm";
 const source = readFileSync(new URL("../client.js", import.meta.url), "utf8")
   .replace(/^import Daily from "@daily-co\/daily-js";\s*/u, "");
 
-function clientWithMicrophoneFailure(failure) {
+function clientWithMicrophoneFailure(failure, providerConfig = { providerName: "OpenAI", dataProcessors: ["Daily", "OpenAI"] }) {
   const elements = new Map();
   const requests = [];
   let dailyOptions;
@@ -33,6 +33,9 @@ function clientWithMicrophoneFailure(failure) {
     AbortSignal,
     clearInterval,
     fetch: async (path) => {
+      if (path === "/api/config") {
+        return { ok: true, json: async () => providerConfig };
+      }
       requests.push(path);
       assert.equal(path, "/api/auth", "Microphone failure must not create a paid session");
       return { ok: true, status: 204 };
@@ -83,4 +86,14 @@ test("an SDK rejection without a message displays a useful fallback", async () =
   assert.equal(client.element("#error").hidden, false);
   assert.match(client.element("#error").textContent, /audio connection could not start/i);
   assert.equal(client.destroyed, true);
+});
+
+test("the page identifies the selected provider and routed data processors", async () => {
+  const client = clientWithMicrophoneFailure(new Error("No microphone"), {
+    providerName: "OpenRouter", dataProcessors: ["Daily", "OpenRouter"],
+  });
+  await client.submit();
+  assert.equal(client.element("#provider-name").textContent, "OpenRouter voice assistant");
+  assert.match(client.element("#data-processors").textContent, /Daily, OpenRouter/);
+  assert.match(client.element("#data-processors").textContent, /selected model providers/);
 });

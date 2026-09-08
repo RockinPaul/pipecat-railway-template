@@ -13,7 +13,7 @@
   <body>
     <header class="masthead">
       <a class="wordmark" href="/" aria-label="Pipecat home"><span class="mark" aria-hidden="true">p.</span> pipecat</a>
-      <span class="edition">Your voice assistant</span>
+      <span class="edition" id="provider-name">Your voice assistant</span>
     </header>
     <main>
       <section class="intro" aria-labelledby="heading">
@@ -40,7 +40,7 @@
         </div>
         <button id="play-audio" class="primary" type="button" hidden>Enable speaker audio</button>
         <p id="error" class="error" role="alert" hidden></p>
-        <p class="privacy">Microphone only. No recording or transcript storage by this app.<br />Audio is processed by Daily and OpenAI.</p>
+        <p class="privacy">Microphone only. No recording or transcript storage by this app.<br /><span id="data-processors">Conversation data is processed by Daily and the configured AI services.</span></p>
         <audio id="remote-audio" autoplay></audio>
       </section>
     </main>

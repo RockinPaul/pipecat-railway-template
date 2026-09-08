@@ -34,6 +34,7 @@ class FakeBot:
 class VoiceServerTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.env = patch.dict(os.environ, {
+            "AI_PROVIDER": "openai",
             "ACCESS_PASSWORD": "offline-test-password-123456789",
             "DAILY_API_KEY": "offline-daily-key",
             "OPENAI_API_KEY": "offline-openai-key",
@@ -83,6 +84,24 @@ class VoiceServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.post("/api/auth")).status_code, 204)
         self.assertEqual(self.requests, [])
         self.spawn_mock.assert_not_called()
+
+    async def test_public_config_is_selected_provider_metadata_only(self):
+        response = await self.client.get("/api/config", headers={"Authorization": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["provider"], "openai")
+        self.assertEqual(response.json()["dataProcessors"], ["Daily", "OpenAI"])
+        self.assertNotIn("API_KEY", response.text)
+        self.assertNotIn("offline-", response.text)
+        self.assertEqual(self.requests, [])
+
+    async def test_start_request_cannot_change_provider(self):
+        response = await self.client.post("/api/start", json={
+            "AI_PROVIDER": "gemini", "GOOGLE_API_KEY": "caller-controlled", "OLLAMA_BASE_URL": "http://untrusted",
+        })
+        self.assertEqual(response.status_code, 200)
+        _, kwargs = self.spawn_mock.call_args
+        self.assertEqual(kwargs["env"]["AI_PROVIDER"], "openai")
+        self.assertNotEqual(kwargs["env"].get("GOOGLE_API_KEY"), "caller-controlled")
 
     async def test_control_routes_require_auth_and_do_not_echo_passwords(self):
         for method, path in [("POST", "/api/auth"), ("POST", "/api/start"),
