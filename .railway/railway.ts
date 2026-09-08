@@ -1,7 +1,8 @@
-import { defineRailway, preserve, project, service } from "railway/iac";
+import { defineRailway, github, preserve, project, service } from "railway/iac";
 
 export default defineRailway(() => {
   const pipecat = service("pipecat", {
+    source: github("RockinPaul/pipecat-railway-template", { branch: "main" }),
     healthcheck: "/health",
     healthcheckTimeout: 120,
     replicas: 1,
