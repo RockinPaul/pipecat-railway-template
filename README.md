@@ -1,5 +1,7 @@
 # Pipecat Voice Agent for Railway
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/pipecat?referralCode=YqmMB-&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
 A private, browser-based AI voice assistant supporting **OpenAI, Gemini, Grok, OpenRouter, and Ollama**. Enter your access password, allow your microphone, and have a spoken conversation. One Railway service serves the browser client and bot; Daily carries the WebRTC audio. Choose the AI provider through environment variables at deployment time.
 
 ## What you need
