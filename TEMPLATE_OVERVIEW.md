@@ -1,37 +1,57 @@
-# Deploy and Host Pipecat Voice Agent on Railway
+# Deploy and Host Pipecat on Railway
 
-A private AI voice assistant with your choice of **OpenAI, Gemini, Grok, OpenRouter, or Ollama**. Deploy one service, supply the keys for your selected provider, and connect in your browser with the generated access password.
+Pipecat is an open-source Python framework for building voice and multimodal AI agents. This template packages Pipecat 1.8.1 as a password-protected voice app you can use in your browser, with a choice of OpenAI, Gemini, Grok, OpenRouter, or Ollama. It deploys one Railway service containing the bot, session API, and web client, with Daily handling the WebRTC audio connection.
 
-## About Hosting Pipecat Voice Agent
+## About Hosting Pipecat
 
-Pipecat is an open-source framework for voice and multimodal AI. This starter combines its provider adapters with Daily's hosted WebRTC transport and a simple browser interface. Railway runs the Python session server and bot. Set `AI_PROVIDER` to choose your backend:
+Hosting this template on Railway means one Docker-based service and no database or persistent volume. Your browser joins a private Daily room using a short-lived token, and a dedicated bot process joins the same room to listen and respond. The browser interface includes microphone controls, connection status, a session timer, and a password prompt; provider API keys stay on the server.
 
-- **OpenAI:** direct speech-to-speech with `gpt-realtime-2.1-mini` by default.
-- **Gemini:** Google's Gemini Live voice models, using `GOOGLE_API_KEY`.
-- **Grok:** xAI's Grok Voice Agent, using `XAI_API_KEY`.
-- **OpenRouter:** a routed language model plus speech recognition and synthesis through one `OPENROUTER_API_KEY` by default.
-- **Ollama:** connect an existing, reachable Ollama server and installed model; choose OpenAI or OpenRouter for speech.
-
-The service includes password-protected session creation, private rooms, expiring browser tokens, microphone controls, and automatic bot cleanup. The browser client is bundled into the same container. No database or persistent volume is required.
+OpenAI, Gemini, and Grok handle speech directly through their realtime voice APIs. OpenRouter and Ollama use a speech-recognition, language-model, and speech-synthesis pipeline. You select the provider, model, voice, and assistant instructions through deployment variables. The template includes an authenticated session server rather than exposing Pipecat's development runner.
 
 ## Common Use Cases
 
-- A private conversational assistant.
-- Prototyping voice agents with a custom system prompt.
-- Learning and extending a small Pipecat application on Railway.
+- A private voice assistant for asking questions, brainstorming, and thinking through ideas aloud
+- Prototyping voice agents with different model providers and a custom system prompt
+- Adding a browser voice interface to an existing Ollama model server
+- A small, self-hosted starting point for extending Pipecat's conversation pipelines
 
-## Dependencies and Costs
+## Dependencies for Pipecat Hosting
 
-Supply `DAILY_API_KEY` and the credentials required by your selected `AI_PROVIDER`. Unused provider keys can stay empty. Use the generated `ACCESS_PASSWORD` to connect in the browser. Provider accounts must have model access and sufficient quota/credit.
+- A Railway account
+- A Daily WebRTC API key, supplied as `DAILY_API_KEY` in every mode
+- An API key for the selected AI provider, with access to the configured models and sufficient quota or credit
+- A browser with microphone access; use the generated HTTPS domain for remote connections
+- For Ollama: a reachable model server with the selected model already installed, plus an OpenAI or OpenRouter key for speech
 
-For `AI_PROVIDER=ollama`, set `OLLAMA_BASE_URL` and `OLLAMA_MODEL`. The default speech provider is OpenAI, requiring `OPENAI_API_KEY`; set `SPEECH_PROVIDER=openrouter` to use `OPENROUTER_API_KEY` instead. This template does not install or provision an Ollama model server, and Railway cannot reach your laptop through `localhost`.
+### Deployment Dependencies
 
-Railway hosting, Daily media, and selected model/speech services are billed separately. This template runs one conversation at a time, with a default ten-minute session limit. It does not include a Pipecat Cloud subscription or autoscaling voice infrastructure. Cheaper LLM tokens do not eliminate speech or hosting costs.
+- Pipecat upstream repository: https://github.com/pipecat-ai/pipecat
+- Pipecat documentation: https://docs.pipecat.ai/
+- Daily developer documentation: https://docs.daily.co/
+- Template repository and complete variable reference: https://github.com/RockinPaul/pipecat-railway-template
+- OpenRouter audio APIs: https://openrouter.ai/docs/guides/overview/multimodal/overview
 
-The app does not record conversations or persist transcripts. Conversation data is processed by Daily and the configured AI/speech services (including OpenRouter's upstream providers) under their policies.
+### Implementation Details
 
-## First Connection
+- `pipecat`: a single Docker service running Python 3.12 and pinned Pipecat dependencies, with the browser client bundled into the same container. It listens on `PORT` (default `8080`) and exposes `/health` for deployment readiness.
+- Access: `ACCESS_PASSWORD` is generated during deployment. Session creation requires this password; the browser receives only a short-lived token for its private Daily room.
+- Sessions: one conversation at a time, with a separate bot process per conversation. Disconnects, inactivity, and session expiry trigger cleanup. `MAX_SESSION_SECONDS` defaults to `600` and accepts values from `30` to `1800`.
+- Storage: the app does not persist recordings or transcripts. Daily and the configured AI/speech services process conversation data under their own policies; OpenRouter also routes data to its selected upstream providers.
 
-Open the service's Railway HTTPS domain. Enter `ACCESS_PASSWORD` from Variables, click Connect, and allow microphone access. You can interrupt the assistant, mute your microphone, or disconnect at any time.
+Set `AI_PROVIDER` to choose the conversation backend:
 
-Customize `BOT_PROMPT` and your provider's model/voice variables. Provider selection is controlled through deployment variables, not by anonymous browser callers. Keep the service at one replica; restarting or deploying can interrupt ongoing conversations.
+- `openai`: requires `OPENAI_API_KEY`. Uses OpenAI Realtime, with `gpt-realtime-2.1-mini` as the default model.
+- `gemini`: requires `GOOGLE_API_KEY`. Uses Gemini Live with separate `GEMINI_MODEL` and `GEMINI_VOICE` settings.
+- `grok`: requires `XAI_API_KEY`. Uses xAI's Grok Voice Agent with `GROK_MODEL` and `GROK_VOICE` settings.
+- `openrouter`: requires `OPENROUTER_API_KEY`. By default, the same key covers the text model, transcription, and speech synthesis. The starter uses Gemini Flash-Lite, Whisper Large V3 Turbo, and Kokoro through OpenRouter, with each model configurable.
+- `ollama`: requires `OLLAMA_BASE_URL` and `OLLAMA_MODEL`. It connects to an existing server; it does not install Ollama or download models. OpenAI supplies speech by default, or set `SPEECH_PROVIDER=openrouter` to use OpenRouter speech instead.
+
+For OpenRouter and Ollama, `SPEECH_PROVIDER` can explicitly select `openai` or `openrouter`; supply the corresponding speech-provider key. Unused provider keys can remain empty. An Ollama URL must be reachable from Railway: `localhost` refers to the Pipecat container, not your laptop.
+
+First connection: open the service's public domain, copy `ACCESS_PASSWORD` from Railway's Variables tab, click **Connect**, and allow microphone access. You can interrupt the assistant, mute your microphone, or disconnect. Set `BOT_PROMPT` to customize its instructions, and use the provider-specific model and voice variables for further changes.
+
+Keep the service at one replica and one worker. Deployments can interrupt an ongoing conversation, and multiple simultaneous sessions require additional session-management infrastructure. Railway hosting, Daily media, and AI/speech usage are billed separately; this template does not require a Pipecat Cloud subscription.
+
+## Why Deploy Pipecat on Railway?
+
+Railway provides the Docker build, HTTPS domain, environment variables, logs, and deployment healthcheck in one project. The web client and bot deploy together, and hosted AI providers handle model inference without a GPU in the Pipecat service. This keeps the infrastructure small while giving you a working browser voice app and a codebase you can extend. If you choose Ollama, its inference server and compute remain separate from this template.
