@@ -17,7 +17,7 @@ Connect this repository as a single service. Railway builds the Dockerfile. Conf
 | `DAILY_API_KEY` | Yes | Daily server API key; no whitespace. |
 | `OPENAI_API_KEY` | Yes | OpenAI API key; no whitespace. |
 | `ACCESS_PASSWORD` | Yes | Random password of at least 24 characters. The template should generate it with `${{secret(48)}}`. |
-| `OPENAI_REALTIME_MODEL` | No | `gpt-realtime`. Choose a Realtime model available to your OpenAI project. |
+| `OPENAI_REALTIME_MODEL` | No | `gpt-realtime-2.1-mini`. Choose a Realtime model available to your OpenAI project. |
 | `BOT_VOICE` | No | `alloy`. Must be supported by the selected model. |
 | `BOT_PROMPT` | No | A brief, helpful AI voice assistant. |
 | `MAX_SESSION_SECONDS` | No | `600`; allowed range 30–1800 seconds. |

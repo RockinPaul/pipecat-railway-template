@@ -31,7 +31,7 @@ async def run_bot(room_url: str, token: str):
     llm = OpenAIRealtimeLLMService(
         api_key=os.environ["OPENAI_API_KEY"],
         settings=OpenAIRealtimeLLMService.Settings(
-            model=os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime"),
+            model=os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime-2.1-mini"),
             system_instruction=os.getenv("BOT_PROMPT") or (
                 "You are a helpful AI voice assistant. Speak naturally and keep answers brief "
                 "unless asked for detail. Be clear that you are an AI. Do not claim to perform "
