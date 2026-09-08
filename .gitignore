@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.env
+.env.*
+!.env.example
+node_modules/
+static/app.js
+static/app.js.map
+.DS_Store
+artifacts/
+.coverage

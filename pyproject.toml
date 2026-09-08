@@ -1,0 +1,11 @@
+[project]
+name = "pipecat-railway-template"
+version = "0.1.0"
+description = "A private browser voice agent powered by Pipecat, Daily, and OpenAI Realtime."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pipecat-ai[daily,openai]==1.8.1",
+    "fastapi>=0.116,<1",
+    "httpx>=0.28,<1",
+    "uvicorn>=0.35,<1",
+]
