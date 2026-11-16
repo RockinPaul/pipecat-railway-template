@@ -112,6 +112,11 @@ class ProviderAdapterTests(unittest.IsolatedAsyncioTestCase):
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-google"}, clear=True):
             llm = create_llm("gemini")
             llm._session = AsyncMock()
+            # The mock session stands in for one that already sent the configured
+            # system instruction; the new SDK tracks that state, and without
+            # marking it as sent the mocked connected session reconnects and the
+            # fixture fails.
+            llm._sent_system_instruction = llm._settings.system_instruction
             await llm._handle_context(LLMContext([{"role": "user", "content": greeting}]))
 
             llm._session.send_client_content.assert_awaited_once()

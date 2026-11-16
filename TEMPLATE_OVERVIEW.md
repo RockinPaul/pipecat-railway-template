@@ -1,6 +1,6 @@
 # Deploy and Host Pipecat on Railway
 
-Pipecat is an open-source Python framework for building voice and multimodal AI agents. This template packages Pipecat 1.8.1 as a password-protected voice app you can use in your browser, with a choice of OpenAI, Gemini, Grok, OpenRouter, or Ollama. It deploys one Railway service containing the bot, session API, and web client, with Daily handling the WebRTC audio connection.
+Pipecat is an open-source Python framework for building voice and multimodal AI agents. This template packages Pipecat 1.16.0 as a password-protected voice app you can use in your browser, with a choice of OpenAI, Gemini, Grok, OpenRouter, or Ollama. It deploys one Railway service containing the bot, session API, and web client, with Daily handling the WebRTC audio connection.
 
 ## About Hosting Pipecat
 
