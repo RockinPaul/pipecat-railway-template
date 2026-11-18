@@ -16,7 +16,7 @@ import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
 
-from providers import public_provider_config, required_secret, validate_provider_environment
+from providers import public_provider_config, required_secret, selected_provider, validate_provider_environment
 
 ROOT = Path(__file__).parent
 logger = logging.getLogger("pipecat_starter")
@@ -47,7 +47,12 @@ async def lifespan(app: FastAPI):
     password = required_secret("ACCESS_PASSWORD")
     if len(password) < 24:
         raise RuntimeError("ACCESS_PASSWORD must contain at least 24 characters")
-    provider = validate_provider_environment()
+    provider = selected_provider()
+    try:
+        validate_provider_environment()
+    except RuntimeError as error:
+        # Provider keys are optional in the deploy form, so stay up and refuse sessions instead.
+        logger.warning("Voice sessions refused until configured: %s", error)
     daily_key = required_secret("DAILY_API_KEY")
     duration = int(os.getenv("MAX_SESSION_SECONDS", "600"))
     if not 30 <= duration <= 1800:
@@ -223,6 +228,10 @@ async def auth():
 async def start_session():
     if app.state.shutting_down:
         raise HTTPException(503, "The app is restarting. Try again shortly.")
+    try:
+        validate_provider_environment()
+    except RuntimeError as error:
+        raise HTTPException(503, f"Voice is not configured: {error}. Set it in the service variables.") from None
     # ponytail: one slot in one process; add a shared dispatcher before replicas.
     if app.state.session is not None:
         raise HTTPException(429, "A conversation is already active. Try again when it ends.")

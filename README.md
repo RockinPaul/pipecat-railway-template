@@ -97,7 +97,7 @@ Deployments/restarts can interrupt an active conversation. This starter does not
 
 ## Verification
 
-Run `uv run python -m unittest discover -s tests -v`, `npm test`, `npm run check`, `npm run build`, and `uv run python bot.py --check`. The automated tests use fake provider responses, bot processes, and browser SDK behavior; they never spend API credit and do not establish live audio.
+Run `npm ci` and `npm run build` first (the server tests serve the built `static/app.js`), then `uv run python -m unittest discover -s tests -v`, `npm test`, `npm run check`, and `uv run python bot.py --check`. The automated tests use fake provider responses, bot processes, and browser SDK behavior; they never spend API credit and do not establish live audio.
 
 All five native adapters are constructed in offline tests. OpenRouter STT multipart requests and TTS PCM responses are checked with mocked HTTP transport, along with key isolation and conditional configuration validation. The OpenAI reference route has been tested with live synthetic browser audio. Gemini, Grok, OpenRouter, and an actual Ollama server still require their own live credentials/endpoint verification; do not equate adapter tests with provider availability or latency guarantees.
 

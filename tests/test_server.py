@@ -232,6 +232,20 @@ class VoiceServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get("/.env")).status_code, 404)
         self.assertEqual((await self.client.get("/server.py")).status_code, 404)
 
+    async def test_missing_provider_key_stays_healthy_but_refuses_sessions(self):
+        await self.lifespan.__aexit__(None, None, None)
+        with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+            self.lifespan = server.app.router.lifespan_context(server.app)
+            await self.lifespan.__aenter__()
+            server.app.state.daily = self.daily
+            self.assertEqual((await self.client.get("/health")).status_code, 200)
+            response = await self.client.post("/api/start")
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("OPENAI_API_KEY", response.json()["detail"])
+        self.assertEqual(self.requests, [])
+        self.spawn_mock.assert_not_called()
+        self.assertIsNone(server.app.state.session)
+
     async def test_invalid_configuration_fails_before_readiness(self):
         for bad in ["", " has-leading-space", "embedded space", "trailing\n"]:
             with patch.dict(os.environ, {"DAILY_API_KEY": bad}):
